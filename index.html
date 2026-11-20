@@ -90,16 +90,37 @@
           <table class="tabla">
             <caption class="solo-lectores">Mejores puntajes</caption>
             <thead>
-              <tr><th scope="col">#</th><th scope="col">Jugador</th><th scope="col">Puntaje</th><th scope="col" class="der">Fecha</th></tr>
+              <tr>
+                <th scope="col">#</th>
+                <th scope="col">Jugador</th>
+                <th scope="col">Puntaje</th>
+                <th scope="col" class="der">Fecha</th>
+                <th scope="col" class="der">Acción</th>
+              </tr>
             </thead>
             <tbody id="ranking-filas"></tbody>
           </table>
         </div>
+
         <aside class="tarjeta posicion">
+          <h2 class="etiqueta">Registrar puntaje (Modo Offline)</h2>
+          <form id="form-puntaje-manual" class="formulario" novalidate>
+            <label class="campo">Nombre del jugador
+              <input type="text" name="nombre" maxlength="20" placeholder="Ej. Mariana" required>
+            </label>
+            <label class="campo">Puntaje obtenido
+              <input type="number" name="puntos" min="0" max="99999" placeholder="Ej. 2850" required>
+            </label>
+            <p class="error" id="puntaje-manual-error" role="alert"></p>
+            <button class="btn btn-primario" type="submit">Guardar</button>
+          </form>
+
+          <hr style="width:100%; border:0; border-top:1px solid rgba(255,255,255,.1); margin: .5rem 0;">
+
           <h2 class="etiqueta">Tu posición</h2>
           <b class="posicion-numero" id="ranking-pos">—</b>
           <span id="ranking-pts"></span>
-          <button class="btn btn-primario" type="button" data-jugar>Jugar para mejorar</button>
+          <button class="btn btn-azul" type="button" data-jugar>Jugar para mejorar</button>
         </aside>
       </div>
     </section>

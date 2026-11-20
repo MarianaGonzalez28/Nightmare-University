@@ -106,6 +106,14 @@ const DB = (() => {
     return (await ranking()).find((f) => f.id === id) || null;
   }
 
+  // Eliminar un puntaje específico por su id (keyPath)
+  async function eliminarPuntaje(id) {
+    await borrarDeIndexedDB(TABLA_PUNTAJES, Number(id));
+    if (Number(localStorage.getItem(CLAVE_ULTIMO)) === Number(id)) {
+      localStorage.removeItem(CLAVE_ULTIMO);
+    }
+  }
+
   /* ---------- CUENTAS (login aparte) ---------- */
 
   async function registrarUsuario({ usuario, correo, clave }) {
@@ -196,6 +204,7 @@ const DB = (() => {
 
   return {
     iniciar, guardarPuntaje, ranking, miUltimoPuntaje, borrarDemo,
-    registrarUsuario, iniciarSesion, cerrarSesion, usuarioActual,
+    registrarUsuario, iniciarSesion, cerrarSesion, usuarioActual, eliminarPuntaje,
   };
 })();
+

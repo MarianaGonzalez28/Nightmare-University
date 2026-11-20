@@ -150,11 +150,31 @@ async function pintarRanking() {
 
   const cuerpo = $('#ranking-filas');
   cuerpo.replaceChildren();
-  if (!filas.length) cuerpo.append(filaVacia(4, 'Aún no hay puntajes.'));
-  for (const f of filas.slice(0, 10)) {
+  if (!filas.length) cuerpo.append(filaVacia(5, 'Aún no hay puntajes.'));
+
+  for (const f of filas.slice(0, 15)) {
     const tr = crear('tr');
     if (mio && f.id === mio.id) tr.className = 'yo';
-    tr.append(celda(String(f.posicion)), celda(f.nombre), celda(formatoPuntos(f.puntos)), celda(formatoFecha(f.fecha), 'der'));
+
+    const tdAccion = crear('td', 'der');
+    const btnEliminar = crear('button', 'btn btn-azul', 'Eliminar');
+    btnEliminar.type = 'button';
+    btnEliminar.style.padding = '0.3rem 0.6rem';
+    btnEliminar.style.fontSize = '0.8rem';
+    btnEliminar.addEventListener('click', async () => {
+      await DB.eliminarPuntaje(f.id);
+      aviso(`Puntaje de ${f.nombre} eliminado.`);
+      await pintarRanking();
+    });
+    tdAccion.append(btnEliminar);
+
+    tr.append(
+      celda(String(f.posicion)),
+      celda(f.nombre),
+      celda(formatoPuntos(f.puntos)),
+      celda(formatoFecha(f.fecha), 'der'),
+      tdAccion
+    );
     cuerpo.append(tr);
   }
 
@@ -324,6 +344,23 @@ function configurarEventos() {
       e.target.reset();
       aviso(`Bienvenido, ${nombre}.`);
       irA('inicio');
+    } catch (ex) {
+      error.textContent = ex.message;
+    }
+  });
+
+  // Formulario manual para agregar puntajes (Semana 8 Offline)
+  $('#form-puntaje-manual').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const error = $('#puntaje-manual-error');
+    error.textContent = '';
+    const datos = Object.fromEntries(new FormData(e.target));
+
+    try {
+      await DB.guardarPuntaje(datos.nombre, Number(datos.puntos));
+      e.target.reset();
+      aviso('Puntaje guardado en IndexedDB.');
+      await pintarRanking();
     } catch (ex) {
       error.textContent = ex.message;
     }
