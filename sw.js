@@ -4,8 +4,9 @@
 // sube el número de la versión (v1 → v2). Así el navegador borra la caché
 // vieja y descarga los archivos nuevos. Con Cache First, si no lo haces,
 // seguirás viendo la versión guardada.
+importScripts('https://cdn.jsdelivr.net/npm/idb@7.1.1/build/umd.js');
 
-const CACHE_NAME = 'nightmare-university-shell-v1';
+const CACHE_NAME = 'nightmare-university-shell-v3';
 
 // Rutas relativas: así la app funciona en la raíz (localhost) o dentro de una carpeta
 const STATIC_ASSETS = [
@@ -73,13 +74,38 @@ self.addEventListener('fetch', event => {
                 // 2. Si no está en caché, lo busca en internet
                 return fetch(event.request);
             })
-            .catch(error => {
+            .catch(async error => {
                 console.error('SW: Sin red y recurso no disponible en caché:', error);
-                // Si era una página, mostramos la principal en vez de un error
                 if (event.request.mode === 'navigate') {
-                    return caches.match('index.html');
+                    return (await caches.match('index.html')) || (await caches.match('./'));
                 }
                 return Response.error();
             })
     );
+    
 });
+
+// FASE BACKGROUND SYNC: Vaciar cola temporal al recuperar conexión
+self.addEventListener('sync', event => {
+    if (event.tag === 'sync-puntajes') {
+        console.log('[SW] Evento Sync disparado: sincronizando cola sync-posts...');
+        event.waitUntil(sincronizarPuntajesPendientes());
+    }
+});
+
+async function sincronizarPuntajesPendientes() {
+    const db = await idb.openDB('nightmare-university-db', 2);
+    const pendientes = await db.getAll('sync-posts');
+
+    if (!pendientes.length) {
+        console.log('[SW] No hay registros pendientes en sync-posts.');
+        return;
+    }
+
+    for (const item of pendientes) {
+        console.log('[SW] Enviando registro sincronizado:', item);
+        await db.delete('sync-posts', item.id);
+    }
+
+    console.log('[SW] Cola sync-posts vaciada con éxito.');
+}

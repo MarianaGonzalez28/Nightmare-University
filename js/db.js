@@ -16,9 +16,10 @@
    ========================================================== */
 const DB = (() => {
   const NOMBRE_DB = 'nightmare-university-db';
-  const VERSION_DB = 1;
+  const VERSION_DB = 2
   const TABLA_PUNTAJES = 'puntajes';
   const TABLA_USUARIOS = 'usuarios';
+  const TABLA_SYNC = 'sync-posts';
 
   const CLAVE_SESION = 'sesion-correo';      // localStorage: quién tiene la sesión abierta
   const CLAVE_ULTIMO = 'ultimo-puntaje-id';  // localStorage: último puntaje registrado en este equipo
@@ -35,6 +36,9 @@ const DB = (() => {
       }
       if (!db.objectStoreNames.contains(TABLA_PUNTAJES)) {
         db.createObjectStore(TABLA_PUNTAJES, { keyPath: 'id', autoIncrement: true });
+      }
+      if (!db.objectStoreNames.contains(TABLA_SYNC)) {
+        db.createObjectStore(TABLA_SYNC, { keyPath: 'id', autoIncrement: true });
       }
     },
   });
@@ -88,6 +92,15 @@ const DB = (() => {
     registro.id = await guardarEnIndexedDB(TABLA_PUNTAJES, registro);
     localStorage.setItem(CLAVE_ULTIMO, String(registro.id));
     return registro;
+  }
+
+  // Guarda el registro en la cola temporal sync-posts para enviarlo cuando vuelva el internet
+  async function encolarPuntajeOffline(registro) {
+    return guardarEnIndexedDB(TABLA_SYNC, {
+      ...registro,
+      estado: 'pendiente',
+      encoladoEn: Date.now()
+    });
   }
 
   // Lista general ordenada: { id, posicion, nombre, puntos, fecha }
@@ -204,7 +217,7 @@ const DB = (() => {
 
   return {
     iniciar, guardarPuntaje, ranking, miUltimoPuntaje, borrarDemo,
-    registrarUsuario, iniciarSesion, cerrarSesion, usuarioActual, eliminarPuntaje,
+    registrarUsuario, iniciarSesion, cerrarSesion, usuarioActual, eliminarPuntaje,encolarPuntajeOffline,
   };
 })();
 

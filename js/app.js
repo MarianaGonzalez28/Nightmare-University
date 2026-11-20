@@ -350,6 +350,7 @@ function configurarEventos() {
   });
 
   // Formulario manual para agregar puntajes (Semana 8 Offline)
+  // Formulario manual con Background Sync (Semana 9)
   $('#form-puntaje-manual').addEventListener('submit', async (e) => {
     e.preventDefault();
     const error = $('#puntaje-manual-error');
@@ -357,9 +358,20 @@ function configurarEventos() {
     const datos = Object.fromEntries(new FormData(e.target));
 
     try {
-      await DB.guardarPuntaje(datos.nombre, Number(datos.puntos));
+      // 1. Guardamos en IndexedDB para actualizar el feed visual de inmediato
+      const registro = await DB.guardarPuntaje(datos.nombre, Number(datos.puntos));
+
+      // 2. Si estamos sin conexión (o usando SyncManager), encolamos en sync-posts
+      if ('serviceWorker' in navigator && 'SyncManager' in window) {
+        await DB.encolarPuntajeOffline(registro);
+        const reg = await navigator.serviceWorker.ready;
+        await reg.sync.register('sync-puntajes');
+        aviso('Sin conexión: puntaje guardado y encolado en sync-posts.');
+      } else {
+        aviso('Puntaje guardado en IndexedDB.');
+      }
+
       e.target.reset();
-      aviso('Puntaje guardado en IndexedDB.');
       await pintarRanking();
     } catch (ex) {
       error.textContent = ex.message;
